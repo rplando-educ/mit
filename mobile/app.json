@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "RAMP Mobile",
+    "slug": "ramp-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/ramp-favicon.png",
+    "scheme": "ramp",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": ["**/*"],
+    "splash": {
+      "image": "./assets/ramp-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "RAMP uses your location to help you find and submit nearby accessibility information.",
+        "NSPhotoLibraryUsageDescription": "RAMP lets you choose photos for accessibility location submissions.",
+        "NSCameraUsageDescription": "RAMP lets you take photos for accessibility location submissions."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/ramp-favicon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "CAMERA", "READ_MEDIA_IMAGES"]
+    },
+    "web": {
+      "favicon": "./assets/ramp-favicon.png"
+    }
+  }
+}
