@@ -63,7 +63,7 @@ export default function LocationDetails() {
   const isOwner = currentUser?.uid === location.contributorId;
 
   return (
-    <div className="grid max-w-full gap-5 overflow-x-hidden p-3 sm:p-4 lg:grid-cols-[1fr_420px] lg:p-6">
+    <div className="grid max-w-full gap-5 overflow-x-hidden p-3 sm:p-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)] lg:p-6 xl:grid-cols-[minmax(0,0.75fr)_minmax(0,1.5fr)]">
       <section className="space-y-6">
         <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-wrap items-start justify-between gap-4">

@@ -3,6 +3,7 @@ import { colors } from '../theme/colors';
 
 export default function AppButton({ title, onPress, variant = 'primary', loading = false, disabled = false }) {
   const isSecondary = variant === 'secondary';
+  const isDanger = variant === 'danger';
 
   return (
     <Pressable
@@ -11,7 +12,7 @@ export default function AppButton({ title, onPress, variant = 'primary', loading
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        isSecondary ? styles.secondary : styles.primary,
+        isDanger ? styles.danger : isSecondary ? styles.secondary : styles.primary,
         (pressed || disabled || loading) && styles.pressed,
       ]}
     >
@@ -37,6 +38,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
     backgroundColor: colors.white,
+  },
+  danger: {
+    backgroundColor: colors.danger,
   },
   pressed: {
     opacity: 0.75,

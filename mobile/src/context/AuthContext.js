@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
@@ -58,8 +59,12 @@ export function AuthProvider({ children }) {
     return signOut(auth);
   }
 
+  function forgotPassword(email) {
+    return sendPasswordResetEmail(auth, email);
+  }
+
   const value = useMemo(
-    () => ({ currentUser, userProfile, loading, register, login, logout }),
+    () => ({ currentUser, userProfile, loading, register, login, logout, forgotPassword }),
     [currentUser, userProfile, loading],
   );
 

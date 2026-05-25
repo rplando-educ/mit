@@ -1,12 +1,14 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { db, storage } from '../firebase/config';
@@ -52,5 +54,27 @@ export async function createLocation(data, photos, user) {
     upvotes: 0,
     reports: 0,
     timestamp: serverTimestamp(),
+  });
+}
+
+export async function updateLocation(id, data, photos, user) {
+  const newPhotos = photos?.length ? await uploadLocationPhotos(photos, user.uid) : [];
+  return updateDoc(doc(db, 'locations', id), {
+    ...data,
+    photos: [...(data.photos || []), ...newPhotos],
+    latitude: Number(data.latitude),
+    longitude: Number(data.longitude),
+    rating: Number(data.rating),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export function deleteLocation(id) {
+  return deleteDoc(doc(db, 'locations', id));
+}
+
+export function upvoteLocation(id, currentUpvotes = 0) {
+  return updateDoc(doc(db, 'locations', id), {
+    upvotes: Number(currentUpvotes || 0) + 1,
   });
 }

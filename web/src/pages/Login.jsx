@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import rampLogo from '../assets/ramp-logo.png';
 
 export default function Login() {
   const { login } = useAuth();
@@ -10,16 +11,18 @@ export default function Login() {
   const location = useLocation();
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   async function handleSubmit(event) {
     event.preventDefault();
+    setError('');
     setLoading(true);
     try {
       await login(form.email, form.password);
       showToast('Welcome back to RAMP.');
       navigate(location.state?.from?.pathname || '/');
     } catch (error) {
-      showToast(error.message, 'error');
+      setError('Invalid email or password. Please check your credentials and try again.');
     } finally {
       setLoading(false);
     }
@@ -27,8 +30,14 @@ export default function Login() {
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto w-[calc(100vw-2rem)] rounded-lg bg-white p-5 shadow-soft sm:w-full sm:max-w-md sm:p-6 dark:bg-slate-900">
+      <img src={rampLogo} alt="RAMP" className="mx-auto mb-5 h-32 w-32 rounded-2xl object-contain sm:h-36 sm:w-36" />
       <h1 className="text-2xl font-black">Login</h1>
       <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Access your saved places, submissions, and community tools.</p>
+      {error ? (
+        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100">
+          {error}
+        </p>
+      ) : null}
       <div className="mt-6 space-y-4">
         <input className="focus-ring w-full rounded-lg border border-slate-200 px-3 py-3 dark:border-slate-700 dark:bg-slate-950" type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
         <input className="focus-ring w-full rounded-lg border border-slate-200 px-3 py-3 dark:border-slate-700 dark:bg-slate-950" type="password" placeholder="Password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />

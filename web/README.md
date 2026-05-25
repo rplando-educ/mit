@@ -56,16 +56,24 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function isOwner(userId) { return signedIn() && request.auth.uid == userId; }
+    function isAdmin() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "Admin";
+    }
 
     match /users/{userId} {
       allow read: if signedIn();
-      allow create, update: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.role == "User";
+      allow update: if isAdmin()
+        || (isOwner(userId) && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
     }
 
     match /locations/{locationId} {
       allow read: if true;
       allow create: if signedIn();
-      allow update, delete: if signedIn() && resource.data.contributorId == request.auth.uid;
+      allow update, delete: if isAdmin()
+        || (signedIn() && resource.data.contributorId == request.auth.uid);
     }
 
     match /reviews/{reviewId} {
@@ -76,7 +84,7 @@ service cloud.firestore {
 
     match /reports/{reportId} {
       allow create: if signedIn();
-      allow read, update, delete: if signedIn();
+      allow read, update, delete: if isAdmin();
     }
   }
 }

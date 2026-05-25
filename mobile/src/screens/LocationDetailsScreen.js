@@ -5,13 +5,14 @@ import FormInput from '../components/FormInput';
 import RampMap from '../components/RampMap';
 import Screen from '../components/Screen';
 import { useAuth } from '../context/AuthContext';
-import { getLocation } from '../services/locationService';
+import { deleteLocation, getLocation, upvoteLocation } from '../services/locationService';
+import { reportLocation } from '../services/reportService';
 import { addReview, subscribeToReviews } from '../services/reviewService';
 import { colors } from '../theme/colors';
 import { ratingOptions } from '../utils/constants';
 import { calculateAccessibilityScore } from '../utils/scoring';
 
-export default function LocationDetailsScreen({ route }) {
+export default function LocationDetailsScreen({ route, navigation }) {
   const { currentUser } = useAuth();
   const { id } = route.params;
   const [location, setLocation] = useState(null);
@@ -33,6 +34,44 @@ export default function LocationDetailsScreen({ route }) {
     }
   }
 
+  async function handleHelpful() {
+    try {
+      await upvoteLocation(id, location.upvotes);
+      setLocation((current) => ({ ...current, upvotes: Number(current.upvotes || 0) + 1 }));
+      Alert.alert('Marked helpful', 'Thank you for helping the community verify this place.');
+    } catch (error) {
+      Alert.alert('Unable to vote', error.message);
+    }
+  }
+
+  async function handleReport() {
+    try {
+      await reportLocation({ locationId: id, reason: 'Incorrect or outdated information', user: currentUser });
+      Alert.alert('Report submitted', 'Moderators will review this location.');
+    } catch (error) {
+      Alert.alert('Report failed', error.message);
+    }
+  }
+
+  function handleDelete() {
+    Alert.alert('Delete location?', 'This will remove your submitted accessibility location.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteLocation(id);
+            Alert.alert('Deleted', 'Location removed.');
+            navigation.navigate('Home');
+          } catch (error) {
+            Alert.alert('Delete failed', error.message);
+          }
+        },
+      },
+    ]);
+  }
+
   if (!location) {
     return (
       <Screen>
@@ -42,6 +81,7 @@ export default function LocationDetailsScreen({ route }) {
   }
 
   const coordinate = { latitude: Number(location.latitude), longitude: Number(location.longitude) };
+  const isOwner = currentUser?.uid === location.contributorId;
 
   return (
     <Screen>
@@ -52,6 +92,16 @@ export default function LocationDetailsScreen({ route }) {
         <Text style={styles.score}>{calculateAccessibilityScore(location)}</Text>
       </View>
       <Text style={styles.description}>{location.description}</Text>
+      <View style={styles.actions}>
+        <AppButton title={`Helpful ${location.upvotes || 0}`} variant="secondary" onPress={handleHelpful} />
+        <AppButton title="Report" variant="secondary" onPress={handleReport} />
+        {isOwner ? (
+          <>
+            <AppButton title="Edit" onPress={() => navigation.navigate('AddLocation', { id })} />
+            <AppButton title="Delete" variant="danger" onPress={handleDelete} />
+          </>
+        ) : null}
+      </View>
 
       <RampMap
         style={styles.map}
@@ -134,6 +184,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
     color: colors.ink,
     lineHeight: 22,
+  },
+  actions: {
+    gap: 10,
+    marginTop: 18,
   },
   map: {
     height: 240,

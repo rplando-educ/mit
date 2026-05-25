@@ -8,7 +8,7 @@ export default function AuthLayout() {
         <div className="flex h-full items-end bg-slate-950/55 p-10 text-white">
           <div>
             <Link to="/" className="mb-6 inline-flex items-center gap-2 text-2xl font-black">
-              <img src={rampLogo} alt="RAMP" className="h-14 w-14 rounded-xl bg-white object-contain" /> RAMP
+              <img src={rampLogo} alt="RAMP" className="h-24 w-24 rounded-2xl bg-white object-contain p-1 shadow-soft" /> RAMP
             </Link>
             <h1 className="max-w-lg text-4xl font-black">Crowdsourced accessibility data for real movement through real places.</h1>
           </div>

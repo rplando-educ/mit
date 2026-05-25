@@ -44,17 +44,6 @@ export default function RampMap({ region, style, markers = [], selectedMarker, o
     updateRegion(nextRegion);
   }
 
-  function dropAtCenter() {
-    onMapPress?.({
-      nativeEvent: {
-        coordinate: {
-          latitude: activeRegion.latitude,
-          longitude: activeRegion.longitude,
-        },
-      },
-    });
-  }
-
   function dropAtPoint(event) {
     const width = mapSize.width || 1;
     const height = mapSize.height || 1;
@@ -113,9 +102,6 @@ export default function RampMap({ region, style, markers = [], selectedMarker, o
       {selectedMarker ? (
         <Text style={styles.selected}>Selected pin: {Number(selectedMarker.coordinate.latitude).toFixed(6)}, {Number(selectedMarker.coordinate.longitude).toFixed(6)}</Text>
       ) : null}
-      <Pressable style={styles.button} onPress={dropAtCenter}>
-        <Text style={styles.buttonText}>Drop pin at map center</Text>
-      </Pressable>
       {markers.length > 0 && (
         <View style={styles.list}>
           {markers.slice(0, 6).map((marker) => (
@@ -209,16 +195,6 @@ const styles = StyleSheet.create({
   },
   selected: {
     color: colors.brandDark,
-    fontWeight: '800',
-  },
-  button: {
-    alignItems: 'center',
-    borderRadius: 10,
-    paddingVertical: 12,
-    backgroundColor: colors.brand,
-  },
-  buttonText: {
-    color: colors.white,
     fontWeight: '800',
   },
   list: {

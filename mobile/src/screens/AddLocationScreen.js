@@ -1,5 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import AppButton from '../components/AppButton';
 import FormInput from '../components/FormInput';
@@ -7,7 +7,7 @@ import RampMap from '../components/RampMap';
 import Screen from '../components/Screen';
 import { useAuth } from '../context/AuthContext';
 import { reverseGeocode, searchPlaces } from '../services/geocodingService';
-import { createLocation } from '../services/locationService';
+import { createLocation, getLocation, updateLocation } from '../services/locationService';
 import { colors } from '../theme/colors';
 import { ACCESSIBILITY_FEATURES, DEFAULT_REGION, ratingOptions } from '../utils/constants';
 
@@ -21,8 +21,9 @@ const emptyForm = {
   rating: 5,
 };
 
-export default function AddLocationScreen({ navigation }) {
+export default function AddLocationScreen({ navigation, route }) {
   const { currentUser } = useAuth();
+  const locationId = route.params?.id;
   const [region, setRegion] = useState(DEFAULT_REGION);
   const [marker, setMarker] = useState(null);
   const [query, setQuery] = useState('Cebu City');
@@ -33,7 +34,25 @@ export default function AddLocationScreen({ navigation }) {
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [lookupStatus, setLookupStatus] = useState('');
-  const [pinMode, setPinMode] = useState(false);
+
+  useEffect(() => {
+    if (!locationId) return;
+
+    getLocation(locationId).then((item) => {
+      if (!item) return;
+      const latitude = Number(item.latitude);
+      const longitude = Number(item.longitude);
+      setForm({ ...emptyForm, ...item });
+      setMarker({ latitude, longitude });
+      setRegion({
+        latitude,
+        longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
+      setQuery(item.address || item.placeName || 'Cebu City');
+    });
+  }, [locationId]);
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -81,7 +100,6 @@ export default function AddLocationScreen({ navigation }) {
     const coordinateAddress = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
 
     setMarker(coordinate);
-    setPinMode(false);
     setRegion((current) => ({
       ...current,
       latitude,
@@ -103,13 +121,6 @@ export default function AddLocationScreen({ navigation }) {
     } catch (error) {
       setLookupStatus('Address lookup unavailable. You can edit the fields manually.');
     }
-  }
-
-  function dropPinAtMapCenter() {
-    dropPin({
-      latitude: Number(region.latitude),
-      longitude: Number(region.longitude),
-    });
   }
 
   function toggleFeature(id) {
@@ -147,14 +158,22 @@ export default function AddLocationScreen({ navigation }) {
 
     setLoading(true);
     try {
-      await createLocation({
+      const payload = {
         ...form,
         latitude: Number(form.latitude),
         longitude: Number(form.longitude),
         rating: Number(form.rating),
-      }, photos, currentUser);
-      Alert.alert('Submitted', 'Location submitted for community verification.');
-      navigation.navigate('Home');
+      };
+
+      if (locationId) {
+        await updateLocation(locationId, payload, photos, currentUser);
+        Alert.alert('Updated', 'Location details were updated.');
+        navigation.navigate('LocationDetails', { id: locationId });
+      } else {
+        await createLocation(payload, photos, currentUser);
+        Alert.alert('Submitted', 'Location submitted for community verification.');
+        navigation.navigate('Home');
+      }
     } catch (error) {
       Alert.alert('Submission failed', error.message);
     } finally {
@@ -163,9 +182,9 @@ export default function AddLocationScreen({ navigation }) {
   }
 
   return (
-    <Screen scrollEnabled={!pinMode}>
-      <Text style={styles.title}>Add accessibility location</Text>
-      <Text style={styles.subtitle}>Search for a place, adjust the map, then enable pin mode to tap the exact location.</Text>
+    <Screen>
+      <Text style={styles.title}>{locationId ? 'Edit accessibility location' : 'Add accessibility location'}</Text>
+      <Text style={styles.subtitle}>Search for a place or address, let the map move there, then tap the map to confirm the exact accessible spot.</Text>
 
       <View style={styles.search}>
         <FormInput value={query} onChangeText={setQuery} placeholder="Cebu City" />
@@ -180,16 +199,6 @@ export default function AddLocationScreen({ navigation }) {
       ))}
       {searchError ? <Text style={styles.searchError}>{searchError}</Text> : null}
 
-      <View style={styles.mapActions}>
-        <AppButton
-          title={pinMode ? 'Pin Mode On: Tap the Map' : 'Enable Tap to Pin'}
-          onPress={() => setPinMode((current) => !current)}
-        />
-      </View>
-      {pinMode ? (
-        <Text style={styles.pinModeText}>Page scrolling is paused. Tap or long-press the map to drop a pin, or tap the button again to cancel.</Text>
-      ) : null}
-
       <RampMap
         style={styles.map}
         region={region}
@@ -197,9 +206,6 @@ export default function AddLocationScreen({ navigation }) {
         onMapPress={(event) => dropPin(event.nativeEvent.coordinate)}
         selectedMarker={marker ? { coordinate: marker, title: 'Selected accessible location' } : null}
       />
-      <View style={styles.mapActions}>
-        <AppButton title="Drop Pin at Map Center" variant="secondary" onPress={dropPinAtMapCenter} />
-      </View>
       {lookupStatus ? <Text style={styles.lookupStatus}>{lookupStatus}</Text> : null}
 
       <View style={styles.form}>
@@ -235,7 +241,7 @@ export default function AddLocationScreen({ navigation }) {
             {photos.map((photo) => <Image key={photo.uri} source={{ uri: photo.uri }} style={styles.photo} />)}
           </ScrollView>
         )}
-        <AppButton title="Submit Location" onPress={submit} loading={loading} disabled={!form.placeName || !form.address || !form.description} />
+        <AppButton title={locationId ? 'Update Location' : 'Submit Location'} onPress={submit} loading={loading} disabled={!form.placeName || !form.address || !form.description} />
       </View>
     </Screen>
   );
@@ -289,15 +295,6 @@ const styles = StyleSheet.create({
     height: 320,
     marginTop: 16,
     borderRadius: 14,
-  },
-  mapActions: {
-    gap: 10,
-    marginTop: 10,
-  },
-  pinModeText: {
-    color: colors.brandDark,
-    fontWeight: '800',
-    lineHeight: 20,
   },
   form: {
     gap: 14,

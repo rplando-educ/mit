@@ -29,6 +29,7 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.actions}>
         <AppButton title="Explore Map" onPress={() => navigation.navigate('Map')} />
         <AppButton title="Add Location" variant="secondary" onPress={() => navigation.navigate('AddLocation')} />
+        <AppButton title="Profile" variant="secondary" onPress={() => navigation.navigate('Profile')} />
       </View>
 
       <Text style={styles.sectionTitle}>Recent accessibility locations</Text>
